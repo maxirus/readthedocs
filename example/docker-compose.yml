@@ -1,0 +1,123 @@
+version: '2'
+services:
+  postgresql:
+    image: postgres:latest
+    environment:
+      - "POSTGRES_USER=admin"
+      - "POSTGRES_PASSWORD=admin"
+      - "POSTGRES_DB=rtd"
+    volumes:
+      - rtd-db:/var/lib/postgresql/data
+    networks:
+      - rtd-net
+  initdb:
+    image: maxirus/readthedocs:latest
+    environment:
+      - "RTD_CONTAINER_TYPE=initdb"
+      - "MV_SVC_PING=postgresql:5432"
+      - "DJANGO_SETTINGS_MODULE=readthedocs.settings.example"
+    volumes:
+      - ./config:/tmp/rtd-settings
+      - rtd-media:/tmp/rtd-media
+    depends_on:
+      - postgresql
+    links:
+      - postgresql
+    networks: 
+      - rtd-net
+    # Use a Simple Server here to let other containers know when it's up via S70SvcSync.sh
+    command: bash -c "(cp -R /opt/rtd/media/* /tmp/rtd-media; sleep 45; python -m SimpleHTTPServer 8000) & ./startup/S01startup.sh"
+  redis:
+    image: redis:latest
+    depends_on:
+      - postgresql
+    networks:
+      - rtd-net
+  worker:
+    image: maxirus/readthedocs:latest
+    environment:
+      - "RTD_CONTAINER_TYPE=celery"
+      - "MV_SVC_PING=initdb:8000"
+      - "DJANGO_SETTINGS_MODULE=readthedocs.settings.example"
+    volumes:
+      - ./config:/tmp/rtd-settings
+      - rtd-media:/opt/rtd/media
+      - rtd-userbuilds:/opt/rtd/user_builds
+      - rtd-webroot:/opt/rtd/public_web_root
+    depends_on:
+      - postgresql
+      - redis
+      - elasticsearch
+    links:
+      - postgresql
+      - redis
+      - elasticsearch
+    networks: 
+      - rtd-net
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:5.3.3
+    environment:
+      - cluster.name=readthedocs
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - 9200:9200
+    volumes:
+      - rtd-es:/usr/share/elasticsearch/data
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    mem_limit: 1g
+    networks: 
+      - rtd-net
+  webserver:
+    image: maxirus/readthedocs:latest
+    environment:
+      - "RTD_CONTAINER_TYPE=webserver"
+      - "MV_SVC_PING=initdb:8000"
+      - "DJANGO_SETTINGS_MODULE=readthedocs.settings.example"
+    volumes:
+      - ./config:/tmp/rtd-settings
+      - rtd-media:/opt/rtd/media
+      - rtd-userbuilds:/opt/rtd/user_builds
+      - rtd-webroot:/opt/rtd/public_web_root
+    ports:
+      - 8000:8000
+    depends_on:
+      - postgresql
+      - redis
+    links:
+      - postgresql
+      - redis
+    networks: 
+      - rtd-net
+  # Add an NGINX server here to broker document requests
+volumes:
+  rtd-media:
+    # driver_opts:
+    #   type: none
+    #   device: /data/rtd/media
+    #   o: bind
+  rtd-userbuilds:
+    # driver_opts:
+    #   type: none
+    #   device: /data/rtd/userbuilds
+    #   o: bind
+  rtd-webroot:
+    # driver_opts:
+    #   type: none
+    #   device: /data/rtd/webroot
+    #   o: bind
+  rtd-db:
+    # driver_opts:
+    #   type: none
+    #   device: /data/rtd/db
+    #   o: bind
+  rtd-es:
+    # driver_opts:
+    #   type: none
+    #   device: /data/rtd/es
+    #   o: bind
+networks:
+  rtd-net:
