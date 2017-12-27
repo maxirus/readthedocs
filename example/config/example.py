@@ -75,9 +75,8 @@ class CommunityExampleSettings(CommunityBaseSettings):
     SESSION_COOKIE_DOMAIN = None
     CACHE_BACKEND = 'dummy://'
 
-    # TODO: Change this
     SLUMBER_USERNAME = 'slumber_user'
-    SLUMBER_PASSWORD = 'slumber_pass'  # noqa: ignore dodgy check
+    SLUMBER_PASSWORD = os.getenv("SLUMBER_USER_PASSWORD")  # noqa: ignore dodgy check
 
     HAYSTACK_CONNECTIONS = {
         'default': {

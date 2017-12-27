@@ -14,8 +14,10 @@ services:
     image: maxirus/readthedocs:latest
     environment:
       - "RTD_CONTAINER_TYPE=initdb"
+      - "ADMIN_USER_PASSWORD=admin"
       - "MV_SVC_PING=postgresql:5432"
-      - "DJANGO_SETTINGS_MODULE=readthedocs.settings.example"
+      - "SLUMBER_USER_PASSWORD=${SLUMBER_USER_PASSWORD}"
+      - "DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE}"
     volumes:
       - ./config:/tmp/rtd-settings
       - rtd-media:/tmp/rtd-media
@@ -38,7 +40,8 @@ services:
     environment:
       - "RTD_CONTAINER_TYPE=celery"
       - "MV_SVC_PING=initdb:8000"
-      - "DJANGO_SETTINGS_MODULE=readthedocs.settings.example"
+      - "SLUMBER_USER_PASSWORD=${SLUMBER_USER_PASSWORD}"
+      - "DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE}"
     volumes:
       - ./config:/tmp/rtd-settings
       - rtd-media:/opt/rtd/media
@@ -76,7 +79,8 @@ services:
     environment:
       - "RTD_CONTAINER_TYPE=webserver"
       - "MV_SVC_PING=initdb:8000"
-      - "DJANGO_SETTINGS_MODULE=readthedocs.settings.example"
+      - "SLUMBER_USER_PASSWORD=${SLUMBER_USER_PASSWORD}"
+      - "DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE}"
     volumes:
       - ./config:/tmp/rtd-settings
       - rtd-media:/opt/rtd/media

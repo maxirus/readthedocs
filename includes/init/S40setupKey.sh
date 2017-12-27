@@ -16,5 +16,6 @@ if [[ -f "${RTD_USER_HOME}/.ssh/id_rsa.pub" ]]; then
     echo ""
     echo "######################"
 else
-    echo "[WARN] No SSH keys found ${RTD_USER_HOME}/.ssh\nSSH connectivity will not be possible."
+    echo "[WARN] No SSH keys found ${RTD_USER_HOME}/.ssh"
+    echo "[WARN] SSH connectivity will not be possible."
 fi
